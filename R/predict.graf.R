@@ -11,6 +11,9 @@ function(object, newdata = NULL, type = c('response', 'latent'),
 	mn <- object$mnfun(object$obsx)
 
   } else {
+    # convert any ints to numerics
+	for(i in 1:ncol(newdata)) if (is.integer(newdata[, i])) newdata[, i] <- as.numeric(newdata[, i])
+	
     if (is.data.frame(newdata) & all(sapply(object$obsx, class) == sapply(newdata, class))) {
 	
 	  # get mean on raw data
@@ -27,10 +30,8 @@ function(object, newdata = NULL, type = c('response', 'latent'),
       if (!is.null(object$scaling)) {
         notfacs <- (1:k)
 		if(length(object$facs) > 0) notfacs <- notfacs[-object$facs]
-        for(i in 1:k) {
-          if (i %in% notfacs) {
-            newdata[, i] <- (newdata[, i] - object$scaling[1, i]) / object$scaling[2, i]
-          }
+		for(i in 1:length(notfacs)) {
+			newdata[, notfacs[i]] <- (newdata[, notfacs[i]] - object$scaling[1, i]) / object$	scaling[2, i]
         }
       }
     } else {
@@ -40,10 +41,12 @@ function(object, newdata = NULL, type = c('response', 'latent'),
 
   # check CI
   if (!is.null(CI)) {
-    if (CI >= 1 | CI <= 0) {
-      stop("CI must be a number between 0 and 1, or NULL")
-    }
-    err <- qnorm( 1 - (1 - CI) / 2 )
+	if (!(CI == 'std' & type == 'latent')) {
+		if (CI >= 1 | CI <= 0) {
+		stop("CI must be a number between 0 and 1, or NULL")
+		}
+		err <- qnorm( 1 - (1 - CI) / 2 )
+	}
   }
   # latent case
   if (type == 'latent') {
@@ -52,7 +55,10 @@ function(object, newdata = NULL, type = c('response', 'latent'),
       # if CIs aren't wanted
       ans <- pred(newdata, object, mn, std = FALSE, maxn = maxn)
       colnames(ans) <- "posterior mean"
-    } else {
+    } else if (CI == 'std') { # if standard deviations are wanted instead
+	  ans <- pred(newdata, object, mn, std = TRUE, maxn = maxn)
+      colnames(ans) <- c("posterior mean", "posterior std")
+	} else {
       # if they are
       pred <- pred(newdata, object, mn, std = TRUE, maxn = maxn)
       upper <- pred[, 1] + err * pred[, 2]

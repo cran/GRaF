@@ -8,13 +8,16 @@ Plot \code{graf} models
 \code{plot.graf} provides basic plots to visualise fitted terms in \code{graf} models. The predicted probability of presence along each covariate is plotted, along with associate credible intervals, with other covariates are held either at their average value or near the peak (point of highest probability) of the latent random field.\cr
 }
 \usage{
-\method{plot}{graf}(x, resolution = 50, CI = 0.95, prior = FALSE, data = TRUE, jitter = 1,
+\method{plot}{graf}(x, vars = NULL, resolution = 50, CI = 0.95, prior = FALSE, data = TRUE, jitter = 1,
 		peak = FALSE, ...)
 }
 
 \arguments{
   \item{x}{
 A \code{graf} object.
+}
+  \item{vars}{
+A vector giving the column index of covariates for which to plot fitted terms. If \code{NULL} fitted terms are plotted for all covariates.
 }
   \item{resolution}{
 The resolution of the prediction line for each covariate.

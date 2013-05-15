@@ -1,6 +1,6 @@
 graf <-
 function (y, x, error = NULL, weights = NULL, prior = NULL, l = NULL, opt.l = FALSE,
-			theta.prior.pars = c(log(10), 1), hessian = FALSE, opt.tol = NULL,
+			theta.prior.pars = c(log(10), 1), hessian = FALSE, opt.control = list(),
 			verbose = FALSE) {
 			
   if (opt.l) {
@@ -21,6 +21,7 @@ function (y, x, error = NULL, weights = NULL, prior = NULL, l = NULL, opt.l = FA
 					verbose = verbose)$mnll
       lpri <- theta.prior(theta)
       lpost <- llik + lpri
+	  if (verbose) cat(paste('\nlog posterior:', lpost, '\n'))
       lpost <- ifelse(is.finite(lpost), lpost, -.Machine$double.xmax)
       return(-lpost)
     }
@@ -58,9 +59,9 @@ function (y, x, error = NULL, weights = NULL, prior = NULL, l = NULL, opt.l = FA
 		up <- Inf
 	}
 	# run numerical optimisation on the hyperparameters
-	if (is.null(opt.tol)) opt.tol <- sqrt(.Machine$double.eps)
+	# if (is.null(opt.tol)) opt.tol <- sqrt(.Machine$double.eps)
     opt <- optim(theta, nlposterior, hessian = hessian, lower = low, upper = up,
-					method = meth, control = list(reltol = opt.tol))
+					method = meth, control = opt.control)
 	
 	# get the resultant lengthscales
 	l[notfacs] <- exp(opt$par)
@@ -69,26 +70,24 @@ function (y, x, error = NULL, weights = NULL, prior = NULL, l = NULL, opt.l = FA
 	if(hessian) hessian <- opt$hessian
 	else hessian <- NULL
 	
-#	# if any of the hyper parameters are close to the limit, alert the user
-#	rem <- which(theta.limit - opt$par < 0.1)
-#	if ((length(rem)) > 0 & verbose) {
-#		cat(paste('\nlengthscales for', names(x)[rem], 'stopped at limit',
-#					exp(theta.limit), '\n'))
-#	}
-	
 	# fit the final model and return
 	return (graf(y, x, error, weights, prior, l = l, verbose = verbose, hessian = hessian))
   }
 
   if (!is.data.frame(x)) stop ("x must be a dataframe")
   
+  # convert any ints to numerics
+  for(i in 1:ncol(x)) if (is.integer(x[, i])) x[, i] <- as.numeric(x[, i])
+  
   obsx <- x
   k <- ncol(x)
   n <- length(y)
   
   if (is.null(weights)) weights <- rep(1, n)
-  if (any(weights > 1 |weights < 0)) stop('weights must be between 0 and 1')
+#   if (any(weights > 1 |weights < 0)) stop('weights must be between 0 and 1')
+  if (any(weights < 0)) stop('weights must be positive or zero')
   
+
   # find factors and convert them to numerics
   notfacs <- 1:k
   facs <- which(unlist(lapply(x, is.factor)))
@@ -105,13 +104,14 @@ function (y, x, error = NULL, weights = NULL, prior = NULL, l = NULL, opt.l = FA
   }
 
   # set up the default prior, if not specified
-  if (is.null(prior))  mnfun <- function(x) rep(mean(y), nrow(x))
+  exp.prev <- sum(weights[y == 1]) / sum(weights[y == 0])
+  if (is.null(prior))  mnfun <- function(x) rep(exp.prev, nrow(x))
   else mnfun <- prior
   
   # give an approximation to l, if not specified (or optimised)
   if (is.null(l)) {
 	l <- rep(0.01, k)
-	l[notfacs] <- apply(x[y == 1, notfacs], 2, sd) * 8
+	l[notfacs] <- apply(x[y == 1, notfacs, drop = FALSE], 2, sd) * 8
   }
   # calculate mean (on unscaled data and probability scale)
   mn <- mnfun(obsx)

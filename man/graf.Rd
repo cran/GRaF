@@ -2,14 +2,14 @@
 \alias{graf}
 
 \title{
-Fit a GRF model to binary data
+Fit a GRaF model to binary data
 }
 \description{
 Sets up and fits a GRaF model, returning an object of class \code{graf} for which functions are available to visualise, compare and make predictions from models.
 }
 \usage{
 graf(y, x, error = NULL, weights = NULL, prior = NULL, l = NULL, opt.l = FALSE,
-		theta.prior.pars = c(log(10), 1), hessian = FALSE, opt.tol = NULL,
+		theta.prior.pars = c(log(10), 1), hessian = FALSE, opt.control = list(),
 		verbose = FALSE)
 }
 \details{
@@ -29,7 +29,7 @@ A dataframe of covariates which may contain factors as well as continuous variab
 An optional matrix of standard deviations associated with x. If this is missing, covariates are assumed to be measured without error.
 }
   \item{weights}{
-An optional vector of weights to be used in the fitting process. Weights must be between 0 and 1, with 1 representing full certainty in an observation and lower values represent less certainty. Observations with a weight of 0 will be ignored.
+An optional vector of weights to be used in the fitting process. Weights must be positive or zero. Observations with a weight of zero will be ignored.
 }
   \item{prior}{
 An optional R function providing an \emph{a priori} estimate of the probability of presence of the species given the covariates. The function must take a dataframe of environmental covariates (matching \code{x}) as input and return a corresponding vector of the probability of presence.
@@ -40,16 +40,17 @@ An optional vector of lengthscales for each dimension of the Gaussian field. The
 If \code{NULL} lengthscales are approximated as 8 times the ratio between the standard deviation of environmental variables at presence sites and the standard deviation of environmental variables at all sites. If \code{opt.l = TRUE} and \code{l} is specified it gives the starting position for the opimisation algorithm. Lengthscales specified for factors will be ignored.
 }
   \item{opt.l}{
-Whether to optimise the lengthscale parameters with respect to the model marginal likelihood using \code{optim} and return a model fitted with the maximum \emph{a posteriori} estimate of the lengthscales. With a large number of data points this can be quite time consuming.
+Whether to optimise the lengthscale parameters with respect to the model marginal likelihood using \code{\link{optim}} (with method \code{BFGS}) and return a model fitted with the maximum \emph{a posteriori} estimate of the lengthscales. With a large number of data points this can be quite time consuming.
 }
   \item{theta.prior.pars}{
 If \code{opt.l = TRUE}, allows the user to specify the mean and standard deviation of the normal hyperprior over the log-lengthscale hyperparameter theta. By default the mean is set at log(10) and the standard deviation at 1. 
 }
   \item{hessian}{
-If \code{opt.l = TRUE}, whether to calculate the hessian matrix whilst optimising lengthscales. Calculating the hessian is more time consuming, but could be used to approximate the full posterior density of the lengthscale hyperparameters.
+If \code{opt.l = TRUE}, whether to calculate the hessian matrix whilst optimising lengthscales. Calculating the hessian is more time consuming and is not recommended for general use, but advanced users could use it to approximate the full posterior density of the lengthscale hyperparameters.
 }
-  \item{opt.tol}{
-If \code{opt.l = TRUE}, sets the relative tolerance for the optimisation routine (passing the value directly to \code{reltol} in \code{optim}). If \code{opt.tol = NULL} the default value of \code{sqrt(.Machine$double.eps)} is used. For large models, reducing this tolerance can reduce computation time, with an associated loss of precision in the optimisation. See \code{control} in \code{\link{optim}} for more details.
+  \item{opt.control}{
+If \code{opt.l = TRUE}, allows the user to pass a list of options directly to the \code{control} argument of the \code{optim} function used to  carry out the lengthscale optimisation.
+For large models, adjusting control parameters such as the convergence tolerance (\code{reltol}) can reduce reduce computation time, with an associated loss of precision in the optimisation. See \code{control} in \code{\link{optim}} for more details.
 }
   \item{verbose}{
 Logical, whether to display (limited) progress information for the fitting algorithms.

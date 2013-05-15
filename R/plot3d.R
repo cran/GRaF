@@ -8,9 +8,9 @@ function (object, dims = c(1, 2), resolution = 20, CI = 0.95, prior = TRUE,
 
   # set up matrix
   if (!peak) {
-  	if(length(facs) > 1) {
-		object$peak[(1:ncol(object$obsx))[-facs]] <- colMeans(object$obsx[, -facs])
-		object$peak[, facs] <- sapply(data.frame(object$obsx[, facs]),
+  	if(length(facs) > 0) {
+		object$peak[(1:ncol(object$obsx))[-facs]] <- colMeans(object$obsx[, -facs, drop = FALSE])
+		object$peak[, facs] <- sapply(data.frame(object$obsx[, facs, drop = FALSE]),
 				function(x) names(sort(table(x), decreasing = TRUE))[1])
 		for(i in facs) {
 			object$peak[, i] <- factor(object$peak[, i], levels = levels(object$obsx[, i]))

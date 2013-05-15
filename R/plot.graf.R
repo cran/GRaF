@@ -1,13 +1,13 @@
 plot.graf <-
-function(x, resolution = 50, CI = 0.95, prior = FALSE, data = TRUE, jitter = 1,
+function(x, vars = NULL, resolution = 50, CI = 0.95, prior = FALSE, data = TRUE, jitter = 1,
 			peak = FALSE, ...) {
   # find factors
   facs <- x$facs
   # if not plotting at peak, find column menas, accounting for factors
   if (!peak) {
-	if(length(facs) > 1) {
-		x$peak[(1:ncol(x$obsx))[-facs]] <- colMeans(x$obsx[, -facs])
-		x$peak[, facs] <- sapply(data.frame(x$obsx[, facs]),
+	if(length(facs) > 0) {
+		x$peak[(1:ncol(x$obsx))[-facs]] <- colMeans(x$obsx[, -facs, drop = FALSE])
+		x$peak[, facs] <- sapply(data.frame(x$obsx[, facs, drop = FALSE]),
 				function(x) names(sort(table(x), decreasing = TRUE))[1])
 		for(i in facs) x$peak[, i] <- factor(x$peak[, i], levels = levels(x$obsx[, i]))
 	} else {
@@ -16,6 +16,7 @@ function(x, resolution = 50, CI = 0.95, prior = FALSE, data = TRUE, jitter = 1,
   }
   pars <- x$peak
   k <- ncol(x$obsx)
+  if (is.null(vars)) vars <- 1:k
   X <- as.data.frame(lapply(pars, rep, resolution))
 
   # calculate scaled data for mean function
@@ -23,13 +24,13 @@ function(x, resolution = 50, CI = 0.95, prior = FALSE, data = TRUE, jitter = 1,
   if (!is.null(x$scaling)) {
     notfacs <- (1:k)
 	if(length(facs) > 0) notfacs <- notfacs[-facs]
-    for(i in 1:k) {
-      if (i %in% notfacs) {
-        scaledX[, i] <- (scaledX[, i] - x$scaling[1, i]) / x$scaling[2, i]
-      }
+    for(i in 1:length(notfacs)) {
+#      if (i %in% notfacs) {
+        scaledX[, notfacs[i]] <- (scaledX[, notfacs[i]] - x$scaling[1, i]) / x$scaling[2, i]
+#      }
     }
   }
-  for (i in 1:k) {
+  for (i in vars) {
     predX <- X
 #    predscaledX <- scaledX
     if(i %in% facs) {

@@ -5,7 +5,7 @@ function(predx, fit, mn, std = TRUE, maxn = 250, same = FALSE) {
   if (n > maxn & !same) {
     inds <- split(1:n, ceiling((1:n) / maxn))
     fun <- function(ind, X, fit, std, maxn) {
-      pred(X[ind, ], fit, mn[ind], std, maxn, same)
+      pred(X[ind, , drop = FALSE], fit, mn[ind], std, maxn, same)
     }    
     prediction <- lapply(inds, fun, predx, fit, std, maxn)
     prediction <- do.call('rbind', prediction)
