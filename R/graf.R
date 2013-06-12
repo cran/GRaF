@@ -104,7 +104,7 @@ function (y, x, error = NULL, weights = NULL, prior = NULL, l = NULL, opt.l = FA
   }
 
   # set up the default prior, if not specified
-  exp.prev <- sum(weights[y == 1]) / sum(weights[y == 0])
+  exp.prev <- sum(weights[y == 1]) / sum(weights)
   if (is.null(prior))  mnfun <- function(x) rep(exp.prev, nrow(x))
   else mnfun <- prior
   
